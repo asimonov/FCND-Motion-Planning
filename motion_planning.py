@@ -120,12 +120,22 @@ class MotionPlanning(Drone):
         self.target_position[2] = TARGET_ALTITUDE
 
         # TODO: read lat0, lon0 from colliders into floating point values
-        
-        # TODO: set home position to (lat0, lon0, 0)
+        filename = 'colliders.csv'
+        with open(filename) as f:
+            for line in f:
+                break
+        (_, lat0, _, lon0) = line.split()
+        lat0 = float(lat0.strip(','))
+        lon0 = float(lon0.strip(','))
+
+        # TODO: set home position to (lat0, lon0, 0), i.e. center of the map provided
+        self.set_home_position(lon0, lat0, 0)
 
         # TODO: retrieve current global position
+        g_pos = self.global_position # lon, lat, alt as np.array
  
         # TODO: convert to current local position using global_to_local()
+        l_pos = global_to_local(g_pos, self.global_home) # NED coordinates
         
         print('global home {0}, position {1}, local position {2}'.format(self.global_home, self.global_position,
                                                                          self.local_position))
@@ -136,9 +146,9 @@ class MotionPlanning(Drone):
         grid, north_offset, east_offset = create_grid(data, TARGET_ALTITUDE, SAFETY_DISTANCE)
         print("North offset = {0}, east offset = {1}".format(north_offset, east_offset))
         # Define starting point on the grid (this is just grid center)
-        grid_start = (-north_offset, -east_offset)
         # TODO: convert start position to current position rather than map center
-        
+        grid_start = (-north_offset+int(l_pos[0]), -east_offset+int(l_pos[1]))
+
         # Set goal as some arbitrary position on the grid
         grid_goal = (-north_offset + 10, -east_offset + 10)
         # TODO: adapt to set goal as latitude / longitude position and convert
@@ -158,6 +168,7 @@ class MotionPlanning(Drone):
         self.waypoints = waypoints
         # TODO: send waypoints to sim
         self.send_waypoints()
+
 
     def start(self):
         self.start_log("Logs", "NavLog.txt")
