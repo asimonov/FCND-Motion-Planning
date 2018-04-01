@@ -53,31 +53,52 @@ Here's what same area looks like in the simulator:
 
 ![Top Down View](./misc/high_up.png)
 
+
+
 ### Implementing Path Planning Algorithm
 
 #### 1. Set global home position
 
-Here students should read the first line of the csv file,
-extract lat0 and lon0 as floating point values and
-use the self.set_home_position() method to set global home.
-Explain briefly how you accomplished this in your code.
-
+We set global home position to the center of the map, as specified in `colliders.csv`
+This is trivial piece of python file/string manipulation code.
 
 #### 2. Set your current local position
-Here as long as you successfully determine your local position relative to global home you'll be all set. Explain briefly how you accomplished this in your code.
 
-
-Meanwhile, here's a picture of me flying through the trees!
-![Forest Flying](./misc/in_the_trees.png)
+Having defined global home we can use NED frame in reference to the home position.
+`global_to_local` function from `frame_utils.py` can do this for us, given home position and our current global coordinates
+(returned by `Drone.global_position`.)
+So the NED frame has its center at the global home position.
 
 #### 3. Set grid start position from local position
-This is another step in adding flexibility to the start location. As long as it works you're good to go!
+
+Here we convert local position in NED coordinates, i.e. meters from home in Norht, East, Down directions, into
+grid coordinates. The grid cell size is 1meter, from the way we defined `create_grid` function.
+So the translation from NED to grid is straightforward - just round NED coordinates to the nearest integer.
 
 #### 4. Set grid goal position from geodetic coords
-This step is to add flexibility to the desired goal location. Should be able to choose any (lat, lon) within the map and have it rendered to a goal location on the grid.
+
+I have defined `g_goal` variable in global coordinates and pass it into plan_path function.
 
 #### 5. Modify A* to include diagonal motion (or replace A* altogether)
-Minimal requirement here is to modify the code in planning_utils() to update the A* implementation to include diagonal motions on the grid that have a cost of sqrt(2), but more creative solutions are welcome. Explain the code you used to accomplish this step.
+
+At first I have modified A* by implementing extra Actions to move north-east, north-west,
+south-west, south-east with cost of `sqrt(2)`.
+
+The time taken to plan path has jumped to 7.98 seconds.
+So I started to profile `a_star` code using [`cprofilev`](https://github.com/ymichael/cprofilev), an easy python profiling tool.
+It turned out that heuristic function was taking most of the time.
+`np.linalg.norm` was the culprit, so I replaced it with `sqrt(x**2+y**2)`, which cut the time to 3.38 secs.
+The next biggest time consumer is get property `delta` on `Action`.
+Replacing it with 2 simple functions to get first and second elements cuts time to 2.98 secs.
+Changing `Action.cost` from being a property to simple function cuts time further to 2.9 sec.
+The resulting code is less generic and specific to 2D planning, but the performance improvements are well worth it!
+Unfortunately with grid based approach to planning there are a lot of computations to perform, so I have left it as is.
+
+
+
+
+more creative solutions are welcome. Explain the code you used to accomplish this step.
+
 
 #### 6. Cull waypoints 
 For this step you can use a collinearity test or ray tracing method like Bresenham. The idea is simply to prune your path of unnecessary waypoints. Explain the code you used to accomplish this step.

@@ -1,6 +1,7 @@
 from enum import Enum
 from queue import PriorityQueue
 import numpy as np
+import math
 
 
 def create_grid(data, drone_altitude, safety_distance):
@@ -51,25 +52,34 @@ class Action(Enum):
     is the cost of performing the action.
     """
 
-    WEST = (0, -1, 1)
-    EAST = (0, 1, 1)
-    NORTH = (-1, 0, 1)
-    SOUTH = (1, 0, 1)
+    WEST = (0, -1, 1.0)
+    EAST = (0, 1, 1.0)
+    NORTH = (-1, 0, 1.0)
+    SOUTH = (1, 0, 1.0)
+    NORTH_EAST = (1, 1, math.sqrt(2))
+    SOUTH_EAST = (-1, 1, math.sqrt(2))
+    SOUTH_WEST = (-1, -1, math.sqrt(2))
+    NORTH_WEST = (1, -1, math.sqrt(2))
 
-    @property
+    #@property
     def cost(self):
         return self.value[2]
 
-    @property
-    def delta(self):
-        return (self.value[0], self.value[1])
+    #@property
+    #def delta(self):
+    #    return (self.value[0], self.value[1])
+
+    def delta1(self):
+        return self.value[0]
+    def delta2(self):
+        return self.value[1]
 
 
 def valid_actions(grid, current_node):
     """
     Returns a list of valid actions given a grid and current node.
     """
-    valid_actions = list(Action)
+    valid_actions = set(Action)
     n, m = grid.shape[0] - 1, grid.shape[1] - 1
     x, y = current_node
 
@@ -77,15 +87,24 @@ def valid_actions(grid, current_node):
     # it's an obstacle
 
     if x - 1 < 0 or grid[x - 1, y] == 1:
-        valid_actions.remove(Action.NORTH)
+        valid_actions.discard(Action.NORTH)
+        valid_actions.discard(Action.NORTH_EAST)
+        valid_actions.discard(Action.NORTH_WEST)
     if x + 1 > n or grid[x + 1, y] == 1:
-        valid_actions.remove(Action.SOUTH)
+        valid_actions.discard(Action.SOUTH)
+        valid_actions.discard(Action.SOUTH_EAST)
+        valid_actions.discard(Action.SOUTH_WEST)
     if y - 1 < 0 or grid[x, y - 1] == 1:
-        valid_actions.remove(Action.WEST)
+        valid_actions.discard(Action.WEST)
+        valid_actions.discard(Action.NORTH_WEST)
+        valid_actions.discard(Action.SOUTH_WEST)
     if y + 1 > m or grid[x, y + 1] == 1:
-        valid_actions.remove(Action.EAST)
+        valid_actions.discard(Action.EAST)
+        valid_actions.discard(Action.NORTH_EAST)
+        valid_actions.discard(Action.SOUTH_EAST)
 
     return valid_actions
+
 
 
 def a_star(grid, h, start, goal):
@@ -95,9 +114,9 @@ def a_star(grid, h, start, goal):
     """
 
     path = []
-    path_cost = 0
+    path_cost = 0.0
     queue = PriorityQueue()
-    queue.put((0, start))
+    queue.put((0.0, start))
     visited = set(start)
 
     branch = {}
@@ -115,8 +134,8 @@ def a_star(grid, h, start, goal):
         else:
             # Get the new vertexes connected to the current vertex
             for a in valid_actions(grid, current_node):
-                next_node = (current_node[0] + a.delta[0], current_node[1] + a.delta[1])
-                new_cost = current_cost + a.cost + h(next_node, goal)
+                next_node = (current_node[0] + a.delta1(), current_node[1] + a.delta2())
+                new_cost = current_cost + a.cost() + h(next_node, goal)
 
                 if next_node not in visited:
                     visited.add(next_node)
@@ -139,6 +158,11 @@ def a_star(grid, h, start, goal):
         print('**********************') 
     return path[::-1], path_cost
 
+
+
 def heuristic(position, goal_position):
-    return np.linalg.norm(np.array(position) - np.array(goal_position))
+    #h = np.linalg.norm(np.array(position) - np.array(goal_position))
+    h = math.sqrt( (position[0]-goal_position[0])**2 + (position[1]-goal_position[1])**2 )
+    return h
+
 
