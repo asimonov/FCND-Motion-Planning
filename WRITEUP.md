@@ -96,23 +96,28 @@ Unfortunately with grid based approach to planning there are a lot of computatio
 
 
 
-
+!!!
 more creative solutions are welcome. Explain the code you used to accomplish this step.
 
 
 #### 6. Cull waypoints 
-For this step you can use a collinearity test or ray tracing method like Bresenham. The idea is simply to prune your path of unnecessary waypoints. Explain the code you used to accomplish this step.
 
+Using collinearity check the path is down from 451 waypoints to just 22. Works flawlessly.
+!!!
 
 ### Execute the flight
 #### 1. Does it work?
+
+!!!
 It works!
 
 ### Double check that you've met specifications for each of the [rubric](https://review.udacity.com/#!/rubrics/1534/view) points.
   
 # Extra Challenges: Real World Planning
 
-For an extra challenge, consider implementing some of the techniques described in the "Real World Planning" lesson. You could try implementing a vehicle model to take dynamic constraints into account, or implement a replanning method to invoke if you get off course or encounter unexpected obstacles.
+For an extra challenge, consider implementing some of the techniques described in the "Real World Planning" lesson.
+You could try implementing a vehicle model to take dynamic constraints into account, or implement a
+replanning method to invoke if you get off course or encounter unexpected obstacles.
 
 
 
