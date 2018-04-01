@@ -2,6 +2,7 @@ from enum import Enum
 from queue import PriorityQueue
 import numpy as np
 import math
+from bresenham import bresenham
 
 
 def create_grid(data, drone_altitude, safety_distance):
@@ -194,3 +195,34 @@ def prune_path(path):
         else:
             i += 1
     return pruned_path
+
+
+def prune_path_bres(path, grid):
+    """
+    Prune grid path using Bresenham ray-tracing method.
+    Requires grid to check if intermediate paths are obstacle-free
+
+    :param path:
+    :param grid:
+    :return:
+    """
+    pruned_path = [path.pop(0)]
+    p2 = path.pop(0)
+    for i, p3 in enumerate(path):
+        if i == len(path):
+            pruned_path.append(p3)
+            break
+        p1 = pruned_path[-1]
+        for p in list(bresenham(p1[0], p1[1], p3[0], p3[1])):
+            if grid[p[0], p[1]] > 0.0:
+                # collision from p1 to p3
+                # use p2 as last point working well
+                pruned_path.append(p2)
+                p2 = p
+                break
+        # p1 to p3 has no collisions, so remove p2
+        p2 = p3
+
+    return pruned_path
+
+

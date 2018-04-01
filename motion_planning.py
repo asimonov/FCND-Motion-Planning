@@ -5,7 +5,7 @@ from enum import Enum, auto
 
 import numpy as np
 
-from planning_utils import a_star, heuristic, create_grid, prune_path
+from planning_utils import a_star, heuristic, create_grid, prune_path, prune_path_bres
 from udacidrone import Drone
 from udacidrone.connection import MavlinkConnection
 from udacidrone.messaging import MsgID
@@ -170,7 +170,8 @@ class MotionPlanning(Drone):
         print('planned in {} secs. path length: {}'.format(time.time()-starttime, len(path)))
 
         # prune path to minimize number of waypoints
-        path = prune_path(path)
+        #path = prune_path(path)
+        path = prune_path_bres(path, grid)
         print('pruned path length: {}'.format(len(path)))
 
         # TODO (if you're feeling ambitious): Try a different approach altogether!
