@@ -83,26 +83,42 @@ I have defined `g_goal` variable in global coordinates and pass it into plan_pat
 
 At first I have modified A* by implementing extra Actions to move north-east, north-west,
 south-west, south-east with cost of `sqrt(2)`.
+Using collinearity check the path is down from 451 waypoints to just 22.
+Here is what the pruned path looked:
 
-The time taken to plan path has jumped to 7.98 seconds.
-So I started to profile `a_star` code using [`cprofilev`](https://github.com/ymichael/cprofilev), an easy python profiling tool.
+![A* with diagonal moves and collinearity pruning](./misc/a_star_coll.png)
+
+Immediately I noticed that the time taken to plan such a path was 7.98 seconds.
+So I started to tune the algorithm.
+I have profiled `a_star` code using [`cprofilev`](https://github.com/ymichael/cprofilev), an easy python profiling tool.
 It turned out that heuristic function was taking most of the time.
 `np.linalg.norm` was the culprit, so I replaced it with `sqrt(x**2+y**2)`, which cut the time to 3.38 secs.
 The next biggest time consumer is get property `delta` on `Action`.
 Replacing it with 2 simple functions to get first and second elements cuts time to 2.98 secs.
 Changing `Action.cost` from being a property to simple function cuts time further to 2.9 sec.
 The resulting code is less generic and specific to 2D planning, but the performance improvements are well worth it!
-Unfortunately with grid based approach to planning there are a lot of computations to perform, so I have left it as is.
+Unfortunately with grid based approach to planning there are a lot of computations to perform, so I have left it there.
 
+Then I replaced collinearity pruning by Bresenham ray tracing algorithm
+to prune not just straigh line path segments, but segments that
+can 'short-cut' parts of the path using straight line free-space segments.
+The path looked much better, without any performance issues:
 
+![A* with Bresenham ray-tracing pruning](./misc/a_star_bresenham.png)
 
-!!!
-more creative solutions are welcome. Explain the code you used to accomplish this step.
+The path looks 'smoother' than simple collinearity pruning, but does go very close to the buildings.
+So next I tried a grid/graph hybrid approach.
+I used grid to Voronoi graph transformation shown in the lectures, using center
+points of the obstacles as seeds for Voronoi space segmentation. With subsequent ray-tracing tests to prune
+resulting Voronoi ridges that collide with obstacles.
+
 
 
 #### 6. Cull waypoints 
 
-Using collinearity check the path is down from 451 waypoints to just 22. Works flawlessly.
+See above.
+I tried both collinearity and ray-tracing.
+Ray
 !!!
 
 ### Execute the flight
