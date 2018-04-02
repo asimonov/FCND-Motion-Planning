@@ -5,7 +5,7 @@ from enum import Enum, auto
 
 import numpy as np
 
-from planning_utils import a_star, heuristic, create_grid, prune_path, prune_path_bres
+from planning_utils import a_star, heuristic, create_grid, prune_path_bres, a_star_graph
 from udacidrone import Drone
 from udacidrone.connection import MavlinkConnection
 from udacidrone.messaging import MsgID
@@ -45,7 +45,8 @@ class MotionPlanning(Drone):
             if -1.0 * self.local_position[2] > 0.95 * self.target_position[2]:
                 self.waypoint_transition()
         elif self.flight_state == States.WAYPOINT:
-            if np.linalg.norm(self.target_position[0:2] - self.local_position[0:2]) < 1.0:
+            DEADBAND = 1.0
+            if np.linalg.norm(self.target_position[0:2] - self.local_position[0:2]) < DEADBAND:
                 if len(self.waypoints) > 0:
                     self.waypoint_transition()
                 else:
@@ -148,7 +149,6 @@ class MotionPlanning(Drone):
 
         # Read in obstacle map
         map_data = np.loadtxt('colliders.csv', delimiter=',', dtype='Float64', skiprows=2)
-        
         # Define a grid for a particular altitude and safety margin around obstacles
         # the way create_grid works is it discretizes the map at 1meter resolution
         grid, north_offset, east_offset = create_grid(map_data, TARGET_ALTITUDE, SAFETY_DISTANCE)
@@ -163,18 +163,18 @@ class MotionPlanning(Drone):
         l_goal = global_to_local(g_goal, self.global_home)
         grid_goal = (-north_offset + int_round(l_goal[0]), -east_offset + int_round(l_goal[1]))
 
-        # Run A* to find a path from start to goal
+
+        # Run A* to find a path from start to goal on a graph using Voronoi regions
         print('Local Start and Goal: ', grid_start, grid_goal)
         starttime = time.time()
-        path, _ = a_star(grid, heuristic, grid_start, grid_goal)
+
+        path, _ = a_star_graph(map_data, TARGET_ALTITUDE, SAFETY_DISTANCE, grid_start, grid_goal)
+
         print('planned in {} secs. path length: {}'.format(time.time()-starttime, len(path)))
 
-        # prune path to minimize number of waypoints
-        #path = prune_path(path)
-        path = prune_path_bres(path, grid)
-        print('pruned path length: {}'.format(len(path)))
-
-        # TODO (if you're feeling ambitious): Try a different approach altogether!
+        print(path[0])
+        print(path[1])
+        print(path[2])
 
         # Convert path to waypoints
         HEADING = 0
