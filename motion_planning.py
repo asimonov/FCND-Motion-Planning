@@ -5,7 +5,7 @@ from enum import Enum, auto
 
 import numpy as np
 
-from planning_utils import a_star, heuristic, create_grid, prune_path_bres, a_star_graph
+from planning_utils import a_star, heuristic, create_grid, prune_path, a_star_graph
 from udacidrone import Drone
 from udacidrone.connection import MavlinkConnection
 from udacidrone.messaging import MsgID
@@ -89,6 +89,7 @@ class MotionPlanning(Drone):
         print("waypoint transition")
         self.target_position = self.waypoints.pop(0)
         print('target position', self.target_position)
+        # cmd_position wants local NED coordinates in meters, i.e. in relation to home
         self.cmd_position(self.target_position[0], self.target_position[1], self.target_position[2], self.target_position[3])
 
     def landing_transition(self):
@@ -172,13 +173,12 @@ class MotionPlanning(Drone):
 
         print('planned in {} secs. path length: {}'.format(time.time()-starttime, len(path)))
 
-        print(path[0])
-        print(path[1])
-        print(path[2])
+        path = prune_path(path)
+        print('pruned path length: {}'.format(len(path)))
 
         # Convert path to waypoints
         HEADING = 0
-        waypoints = [[p[0] + north_offset, p[1] + east_offset, TARGET_ALTITUDE, HEADING] for p in path]
+        waypoints = [[int_round(p[0]) + north_offset, int_round(p[1]) + east_offset, TARGET_ALTITUDE, HEADING] for p in path]
         # Set self.waypoints to follow
         self.waypoints = waypoints
         # send waypoints to sim for visualization

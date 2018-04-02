@@ -111,21 +111,23 @@ So next I tried a grid/graph hybrid approach.
 I used grid to Voronoi graph transformation shown in the lectures, using center
 points of the obstacles as seeds for Voronoi space segmentation. With subsequent ray-tracing tests to prune
 resulting Voronoi ridges that collide with obstacles.
+The current map representation generates ~9700 Voronoi ridges that need to be mutually tested by Bresenham if they
+can connect through the free space. Only ~1400 ridges satisfy this condition. But because of this step the planning
+takes a lot longer than simple A* on grid.
+The resulting path is much safer as it clears obstacles by a wide margin:
 
+![A* on Voronoi-inspired graph](./misc/a_star_graph.png)
 
 
 #### 6. Cull waypoints 
 
-See above.
-I tried both collinearity and ray-tracing.
-Ray
-!!!
+See above. I tried both collinearity and ray-tracing for grid-based A* search.
+And collinearity for A* on graph. It does result in small reduction of graph-based path length.
 
 ### Execute the flight
 #### 1. Does it work?
 
-!!!
-It works!
+The flight works beautifully.
 
 ### Double check that you've met specifications for each of the [rubric](https://review.udacity.com/#!/rubrics/1534/view) points.
   
