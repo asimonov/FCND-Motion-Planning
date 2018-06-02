@@ -154,9 +154,9 @@ class MotionPlanning(Drone):
         print("North offset = {0}, east offset = {1}".format(north_offset, east_offset))
 
         # Convert local position to grid coordinates
+        def int_round(i):
+            return int(round(i))
         def local_to_grid(l_pos, north_offset, east_offset):
-            def int_round(i):
-                return int(round(i))
             return (-north_offset + int_round(l_pos[0]), -east_offset + int_round(l_pos[1]))
         grid_start = local_to_grid(l_pos, north_offset, east_offset)
 
@@ -170,18 +170,25 @@ class MotionPlanning(Drone):
 
         path, _ = a_star_graph(map_data, TARGET_ALTITUDE, SAFETY_DISTANCE, grid_start, grid_goal)
 
-        print('planned using A* on graph in {} secs. path length: {}'.format(time.time() - starttime, len(path)))
+        print('planned using A* on full graph in {} secs. path length: {}'.format(time.time() - starttime, len(path)))
 
         path = prune_path(path)
         print('pruned path length: {}'.format(len(path)))
 
         # Convert path to waypoints
-        HEADING = 0
-        waypoints = [[int_round(p[0]) + north_offset,
-                      int_round(p[1]) + east_offset,
-                      TARGET_ALTITUDE,
-                      HEADING] for p in
-                     path]
+        heading = 0
+        waypoints = []
+        wp1 = None
+        for p in path:
+            wp2 = [int_round(p[0]) + north_offset,
+                              int_round(p[1]) + east_offset,
+                              TARGET_ALTITUDE,
+                              heading]
+            if wp1 is not None:
+                heading = np.arctan2(wp2[1]-wp1[1], wp2[0]-wp1[0])
+                wp2[3] = heading
+            waypoints.append(wp2)
+            wp1 = wp2
         # Set self.waypoints to follow
         self.waypoints = waypoints
         # send waypoints to sim for visualization
