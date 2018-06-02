@@ -141,10 +141,10 @@ class MotionPlanning(Drone):
 
         # retrieve current global position of the Drone. (lon, lat, alt) as np.array
         g_pos = self.global_position
- 
+
         # convert current global coordinates to NED frame (centered at home)
         l_pos = global_to_local(g_pos, self.global_home)
-        
+
         print('global home {0}, position {1}, local position {2}'.format(self.global_home, self.global_position,
                                                                          self.local_position))
 
@@ -158,12 +158,12 @@ class MotionPlanning(Drone):
         # Convert NED position to point on the grid
         def int_round(i):
             return int(round(i))
+
         grid_start = (-north_offset + int_round(l_pos[0]), -east_offset + int_round(l_pos[1]))
 
         # Set goal in grid coordinates
         l_goal = global_to_local(g_goal, self.global_home)
         grid_goal = (-north_offset + int_round(l_goal[0]), -east_offset + int_round(l_goal[1]))
-
 
         # Run A* to find a path from start to goal on a graph using Voronoi regions
         print('Local Start and Goal: ', grid_start, grid_goal)
@@ -171,19 +171,19 @@ class MotionPlanning(Drone):
 
         path, _ = a_star_graph(map_data, TARGET_ALTITUDE, SAFETY_DISTANCE, grid_start, grid_goal)
 
-        print('planned in {} secs. path length: {}'.format(time.time()-starttime, len(path)))
+        print('planned in {} secs. path length: {}'.format(time.time() - starttime, len(path)))
 
         path = prune_path(path)
         print('pruned path length: {}'.format(len(path)))
 
         # Convert path to waypoints
         HEADING = 0
-        waypoints = [[int_round(p[0]) + north_offset, int_round(p[1]) + east_offset, TARGET_ALTITUDE, HEADING] for p in path]
+        waypoints = [[int_round(p[0]) + north_offset, int_round(p[1]) + east_offset, TARGET_ALTITUDE, HEADING] for p in
+                     path]
         # Set self.waypoints to follow
         self.waypoints = waypoints
         # send waypoints to sim for visualization
         self.send_waypoints()
-
 
     def start(self):
         self.start_log("Logs", "NavLog.txt")
