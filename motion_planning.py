@@ -45,8 +45,18 @@ class MotionPlanning(Drone):
             if -1.0 * self.local_position[2] > 0.95 * self.target_position[2]:
                 self.waypoint_transition()
         elif self.flight_state == States.WAYPOINT:
-            DEADBAND = 1.0
-            if np.linalg.norm(self.target_position[0:2] - self.local_position[0:2]) < DEADBAND:
+            v = self.local_velocity
+            v_norm = np.linalg.norm(v)
+            print("velocity {}".format(v_norm))
+            tp = self.target_position[0:3]
+            lp = self.local_position[0:3]
+            lp[-1] = -lp[-1] # for some strange reason altitude here is not negative
+            dist = np.linalg.norm(tp - lp)
+            print("distance {}".format(dist))
+            DEADBAND = v_norm * 1.0 # speed times time of 1 sec
+            if DEADBAND < 1.0:
+                DEADBAND = 1.0
+            if dist < DEADBAND:
                 if len(self.waypoints) > 0:
                     self.waypoint_transition()
                 else:
@@ -61,10 +71,12 @@ class MotionPlanning(Drone):
 
     def state_callback(self):
         if self.in_mission:
+            print("state cb: {}".format(self.flight_state))
             if self.flight_state == States.MANUAL:
                 self.arming_transition()
             elif self.flight_state == States.ARMING:
                 if self.armed:
+                    self.flight_state = States.PLANNING
                     g_goal = (-122.400915, 37.794507, 0)  # commercial/battery st. (lon, lat, alt)
                     self.plan_path(g_goal)
             elif self.flight_state == States.PLANNING:
@@ -88,7 +100,7 @@ class MotionPlanning(Drone):
         self.flight_state = States.WAYPOINT
         print("waypoint transition")
         self.target_position = self.waypoints.pop(0)
-        print('target position', self.target_position)
+        print('target WP: ', self.target_position)
         # cmd_position wants local NED coordinates in meters, i.e. in relation to home
         self.cmd_position(self.target_position[0], self.target_position[1], self.target_position[2], self.target_position[3])
 
@@ -121,7 +133,6 @@ class MotionPlanning(Drone):
         :param g_goal: goal, geodetic coordinates
         :return:
         """
-        self.flight_state = States.PLANNING
         print("Searching for a path ...")
         TARGET_ALTITUDE = 5
         SAFETY_DISTANCE = 5
