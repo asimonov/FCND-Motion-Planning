@@ -35,12 +35,15 @@ user-defined heuristic function.
     * convert path to waypoints
     * send waypoints to simulator (for visualisation)
 
-The provided `colliders.csv` file represents a map around starting location (first line of the file `lat0 37.792480, lon0 -122.397450`),
-which happens to be in San-Francisco:
+The provided `colliders.csv` file represents a map of area
+around central San-Francisco with obstacle positions given in relation
+to global position specified in the first line of 
+the file `lat0 37.792480, lon0 -122.397450`:
 
 ![Map of SF](./misc/gmaps_start.png)
 
-The remaining lines in `colliders.csv` represent center points of obstacles along with their dimensions in 3D:
+The remaining lines in `colliders.csv` represent center points of obstacles 
+along with their dimensions in 3D:
 
 ```
 posX,posY,posZ,halfSizeX,halfSizeY,halfSizeZ
@@ -75,18 +78,17 @@ We set global home position to the center of the map, as specified in `colliders
 ```
 
 This obviously means that the drone better be around that position,
-either in simulation or in real world.
+either in the simulation or in the real world.
 Because the map only coveres certain area around this position.
 If the actual drone is started in Easter Island it will have real trouble
 planning a path as the map does not go there.
 In our case simulator initialises the drone in pretty much the position we set as home.
 
+
 #### 2. Set your current local position
 
-Having defined global home we can use NED frame in reference to the home position.
-`global_to_local` function from `frame_utils.py` can do this for us, given home position and our current global coordinates
-(returned by `Drone.global_position`.)
-So the NED frame has its center at the global home position.
+Having defined global home we can operate in the NED frame centered at the home position.
+`global_to_local` function from `frame_utils.py` can convert between global and NED frames.
 
 Under the hood `global_to_local()` uses python `utm` package (Bidirectional UTM-WGS84 converter,
 UTM being [Universal Transverse Mercator](https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system)).
@@ -106,6 +108,17 @@ def global_to_local(global_position, global_home):
     local_position = np.array([north - north_home, east - east_home, -global_position[2]])
     return local_position
 ```
+
+And we use this as follows:
+
+```python
+        # retrieve current global position of the Drone. (lon, lat, alt) as np.array
+        # convert current global coordinates to NED frame (centered at home)
+        l_pos = global_to_local(self.global_position, self.global_home)
+```
+
+
+
 
 #### 3. Set grid start position from local position
 
