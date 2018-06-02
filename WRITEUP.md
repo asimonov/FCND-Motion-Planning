@@ -199,6 +199,10 @@ And collinearity for A* on graph. It does result in small reduction of graph-bas
 #### 1. Does it work?
 
 The flight works beautifully.
+But with distance-based waypoints the drone movement along the path is jerky.
+I have improved here by making 'deadband' around waypoint a function of time and speed,
+see below.
+
 
 ### Double check that you've met specifications for each of the [rubric](https://review.udacity.com/#!/rubrics/1534/view) points.
   
@@ -208,19 +212,40 @@ For an extra challenge, consider implementing some of the techniques described i
 You could try implementing a vehicle model to take dynamic constraints into account, or implement a
 replanning method to invoke if you get off course or encounter unexpected obstacles.
 
+### Time-based Deadbands
 
+I have improved progress on the path
+by using the approach of 'if we are within 1 second of getting to currently
+targeted waypoint, switch to the next one':
 
+```python
+    def local_position_callback(self):
+        if self.flight_state == States.TAKEOFF:
+            if -1.0 * self.local_position[2] > 0.95 * self.target_position[2]:
+                self.waypoint_transition()
+        elif self.flight_state == States.WAYPOINT:
+            v = self.local_velocity
+            v_norm = np.linalg.norm(v)
+            tp = self.target_position[0:3]
+            lp = self.local_position[0:3]
+            lp[-1] = -lp[-1] # for some strange reason altitude here is not negative
+            dist = np.linalg.norm(tp - lp)
+            DEADBAND = v_norm * 1.0 # speed times time of 1 sec
+            if DEADBAND < 1.0:
+                DEADBAND = 1.0
+            if dist < DEADBAND:
+                if len(self.waypoints) > 0:
+                    self.waypoint_transition()
+                else:
+                    if np.linalg.norm(self.local_velocity[0:2]) < 1.0:
+                        self.landing_transition()
+```
 
-
-
-Here's | A | Snappy | Table
---- | --- | --- | ---
-1 | `highlight` | **bold** | 7.41
-2 | a | b | c
-3 | *italic* | text | 403
-4 | 2 | 3 | abcd
-
-
+This results in much smoother movement of the drone along the path.
+It is not following waypoints precisely, but given that our path planning
+generated the path that is far away from the obstacles it is good enough 
+approach to not crash
+and still maintain good progress towards goal.
 
 
 
