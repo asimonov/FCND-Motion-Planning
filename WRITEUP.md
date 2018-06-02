@@ -259,4 +259,26 @@ path in 71 seconds! That is for the path of 549 meters, so averaging 7.7 m/s.
 
 
 
+### Probabilistic Roadmap
+
+We have tried to adapt classrom implementation of 3D probabilistic roadmap.
+It proved quite tricky.
+The way our map is represented by about 4000 colliders does not work really well
+with the proposed algorithm out of the box. It requires about 3000 samples
+with number of neighbours of 5 to produce more or less connected graph in about 10 minutes
+on a laptop.
+This is much worse performance than that of Voronoi-based approach.
+We have tried to improve performance by using `cprofilev`.
+It is the testing whether a line between 2 points passes through polygon that
+is taking all of the time. This operation is cheap with `shapely`, but it has to
+happen for about 6 million times for our map representation and reasonable number of
+samples. So it becomes the biggest time consumer.
+
+As of now we have put this idea on hold, to be tackled when we know more about
+better 3D map representations. In particular map representations that are optimised
+for the intersection tests.
+
+
+
+
 
