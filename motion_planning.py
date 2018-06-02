@@ -140,30 +140,29 @@ class MotionPlanning(Drone):
         self.set_home_position(lon0, lat0, 0)
 
         # retrieve current global position of the Drone. (lon, lat, alt) as np.array
-        g_pos = self.global_position
-
         # convert current global coordinates to NED frame (centered at home)
-        l_pos = global_to_local(g_pos, self.global_home)
+        l_pos = global_to_local(self.global_position, self.global_home)
 
         print('global home {0}, position {1}, local position {2}'.format(self.global_home, self.global_position,
                                                                          self.local_position))
 
         # Read in obstacle map
         map_data = np.loadtxt('colliders.csv', delimiter=',', dtype='Float64', skiprows=2)
-        # Define a grid for a particular altitude and safety margin around obstacles
-        # the way create_grid works is it discretizes the map at 1meter resolution
+        # Define 2D grid representation of the map at specified altitude, with specified safety margin around obstacles
+        # create_grid discretizes the map at 1 meter resolution.
         grid, north_offset, east_offset = create_grid(map_data, TARGET_ALTITUDE, SAFETY_DISTANCE)
         print("North offset = {0}, east offset = {1}".format(north_offset, east_offset))
 
-        # Convert NED position to point on the grid
-        def int_round(i):
-            return int(round(i))
-
-        grid_start = (-north_offset + int_round(l_pos[0]), -east_offset + int_round(l_pos[1]))
+        # Convert local position to grid coordinates
+        def local_to_grid(l_pos, north_offset, east_offset):
+            def int_round(i):
+                return int(round(i))
+            return (-north_offset + int_round(l_pos[0]), -east_offset + int_round(l_pos[1]))
+        grid_start = local_to_grid(l_pos, north_offset, east_offset)
 
         # Set goal in grid coordinates
         l_goal = global_to_local(g_goal, self.global_home)
-        grid_goal = (-north_offset + int_round(l_goal[0]), -east_offset + int_round(l_goal[1]))
+        grid_goal = local_to_grid(l_goal, north_offset, east_offset)
 
         # Run A* to find a path from start to goal on a graph using Voronoi regions
         print('Local Start and Goal: ', grid_start, grid_goal)
@@ -171,14 +170,17 @@ class MotionPlanning(Drone):
 
         path, _ = a_star_graph(map_data, TARGET_ALTITUDE, SAFETY_DISTANCE, grid_start, grid_goal)
 
-        print('planned in {} secs. path length: {}'.format(time.time() - starttime, len(path)))
+        print('planned using A* on graph in {} secs. path length: {}'.format(time.time() - starttime, len(path)))
 
         path = prune_path(path)
         print('pruned path length: {}'.format(len(path)))
 
         # Convert path to waypoints
         HEADING = 0
-        waypoints = [[int_round(p[0]) + north_offset, int_round(p[1]) + east_offset, TARGET_ALTITUDE, HEADING] for p in
+        waypoints = [[int_round(p[0]) + north_offset,
+                      int_round(p[1]) + east_offset,
+                      TARGET_ALTITUDE,
+                      HEADING] for p in
                      path]
         # Set self.waypoints to follow
         self.waypoints = waypoints
