@@ -31,6 +31,7 @@ class MotionPlanning(Drone):
         self.waypoints = []
         self.in_mission = True
         self.check_state = {}
+        self.mission_start_time = None
 
         # initial state
         self.flight_state = States.MANUAL
@@ -47,12 +48,10 @@ class MotionPlanning(Drone):
         elif self.flight_state == States.WAYPOINT:
             v = self.local_velocity
             v_norm = np.linalg.norm(v)
-            print("velocity {}".format(v_norm))
             tp = self.target_position[0:3]
             lp = self.local_position[0:3]
             lp[-1] = -lp[-1] # for some strange reason altitude here is not negative
             dist = np.linalg.norm(tp - lp)
-            print("distance {}".format(dist))
             DEADBAND = v_norm * 1.0 # speed times time of 1 sec
             if DEADBAND < 1.0:
                 DEADBAND = 1.0
@@ -67,6 +66,7 @@ class MotionPlanning(Drone):
         if self.flight_state == States.LANDING:
             if self.global_position[2] - self.global_home[2] < 0.1:
                 if abs(self.local_position[2]) < 0.01:
+                    print("mission finished. total time after planning: {:.2f}".format(time.time() - self.mission_start_time))
                     self.disarming_transition()
 
     def state_callback(self):
@@ -80,6 +80,7 @@ class MotionPlanning(Drone):
                     g_goal = (-122.400915, 37.794507, 0)  # commercial/battery st. (lon, lat, alt)
                     self.plan_path(g_goal)
             elif self.flight_state == States.PLANNING:
+                self.mission_start_time = time.time()
                 self.takeoff_transition()
             elif self.flight_state == States.DISARMING:
                 if ~self.armed & ~self.guided:
@@ -190,6 +191,7 @@ class MotionPlanning(Drone):
         heading = 0
         waypoints = []
         wp1 = None
+        total_distance = 0.0
         for p in path:
             wp2 = [int_round(p[0]) + north_offset,
                               int_round(p[1]) + east_offset,
@@ -198,8 +200,10 @@ class MotionPlanning(Drone):
             if wp1 is not None:
                 heading = np.arctan2(wp2[1]-wp1[1], wp2[0]-wp1[0])
                 wp2[3] = heading
+                total_distance += np.linalg.norm(np.array(wp2)-np.array(wp1))
             waypoints.append(wp2)
             wp1 = wp2
+        print("total planned 3D path length: {:.2f} meters".format(total_distance))
         # Set self.waypoints to follow
         self.waypoints = waypoints
         # send waypoints to sim for visualization
