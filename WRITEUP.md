@@ -74,6 +74,12 @@ We set global home position to the center of the map, as specified in `colliders
         self.set_home_position(lon0, lat0, 0)
 ```
 
+This obviously means that the drone better be around that position,
+either in simulation or in real world.
+Because the map only coveres certain area around this position.
+If the actual drone is started in Easter Island it will have real trouble
+planning a path as the map does not go there.
+In our case simulator initialises the drone in pretty much the position we set as home.
 
 #### 2. Set your current local position
 
@@ -83,7 +89,7 @@ Having defined global home we can use NED frame in reference to the home positio
 So the NED frame has its center at the global home position.
 
 Under the hood `global_to_local()` uses python `utm` package (Bidirectional UTM-WGS84 converter,
-UTM being [Universal Transverse Mercator](https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system))
+UTM being [Universal Transverse Mercator](https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system)).
 It is instructive to see how this is done:
 
 ```python
@@ -103,9 +109,12 @@ def global_to_local(global_position, global_home):
 
 #### 3. Set grid start position from local position
 
-Here we convert local position in NED coordinates, i.e. meters from home in Norht, East, Down directions, into
-grid coordinates. The grid cell size is 1meter, from the way we defined `create_grid` function.
-So the translation from NED to grid is straightforward - just round NED coordinates to the nearest integer.
+Here we convert local position in NED coordinates, i.e. meters from 
+home in Norht, East, Down directions, into
+grid coordinates. The grid cell size is 1 meter, from the way we 
+defined `create_grid` function.
+So the translation from NED to grid is straightforward - just round NED 
+coordinates to the nearest integer.
 
 #### 4. Set grid goal position from geodetic coords
 
