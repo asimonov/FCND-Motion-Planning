@@ -152,7 +152,8 @@ coordinates to the nearest integer.
 
 #### 5. Modify A* to include diagonal motion (or replace A* altogether)
 
-At first I have modified A* by implementing extra Actions to move north-east, north-west,
+At first I have modified `A* on the grid` implementation provided in lectures
+by implementing extra `Actions` to move north-east, north-west,
 south-west, south-east with cost of `sqrt(2)`.
 Using collinearity check the path is down from 451 waypoints to just 22.
 Here is what the pruned path looked:
@@ -178,6 +179,7 @@ The path looked much better, without any performance issues:
 ![A* with Bresenham ray-tracing pruning](./misc/a_star_bresenham.png)
 
 The path looks 'smoother' than simple collinearity pruning, but does go very close to the buildings.
+
 So next I tried a grid/graph hybrid approach.
 I used grid to Voronoi graph transformation shown in the lectures, using center
 points of the obstacles as seeds for Voronoi space segmentation. With subsequent ray-tracing tests to prune
@@ -194,6 +196,7 @@ The resulting path is much safer as it clears obstacles by a wide margin:
 
 See above. I tried both collinearity and ray-tracing for grid-based A* search.
 And collinearity for A* on graph. It does result in small reduction of graph-based path length.
+
 
 ### Execute the flight
 #### 1. Does it work?
@@ -247,7 +250,8 @@ generated the path that is far away from the obstacles it is good enough
 approach to not crash
 and still maintain good progress towards goal.
 
-
+I have tested this with increased `max_speed` simulator parameter of *15 m/s*
+and it still works great!
 
 
 
