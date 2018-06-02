@@ -185,11 +185,14 @@ I used grid to Voronoi graph transformation shown in the lectures, using center
 points of the obstacles as seeds for Voronoi space segmentation. With subsequent ray-tracing tests to prune
 resulting Voronoi ridges that collide with obstacles.
 The current map representation generates ~9700 Voronoi ridges that need to be mutually tested by Bresenham if they
-can connect through the free space. Only ~1400 ridges satisfy this condition. But because of this step the planning
-takes a lot longer than simple A* on grid.
+can connect through the free space. Only ~1400 ridges satisfy this condition. 
+But because of this step the planning
+takes a lot longer than simple A* on grid -- 22 seconds.
+
 The resulting path is much safer as it clears obstacles by a wide margin:
 
 ![A* on Voronoi-inspired graph](./misc/a_star_graph.png)
+
 
 
 #### 6. Cull waypoints 
@@ -251,7 +254,9 @@ approach to not crash
 and still maintain good progress towards goal.
 
 I have tested this with increased `max_speed` simulator parameter of *15 m/s*
-and it still works great!
+and it still works great! For the target that I picked I can execute the planned
+path in 71 seconds! That is for the path of 549 meters, so averaging 7.7 m/s.
+
 
 
 
