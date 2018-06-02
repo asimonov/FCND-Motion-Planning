@@ -122,12 +122,22 @@ And we use this as follows:
 
 #### 3. Set grid start position from local position
 
-Here we convert local position in NED coordinates, i.e. meters from 
-home in Norht, East, Down directions, into
-grid coordinates. The grid cell size is 1 meter, from the way we 
-defined `create_grid` function.
-So the translation from NED to grid is straightforward - just round NED 
+We use 3D grid map representation where each grid 
+cell is either occupied or free.
+We also navigate from a cell to a cell of that grid.
+We in this step we need to convert our NED coordinates (which are in meters)
+to grid indices of the cell we are in.
+
+As the grid cell size is defined to be 1 meter (we 
+defined this in `create_grid` function)
+the translation is straightforward - just round NED 
 coordinates to the nearest integer.
+
+```python
+        def int_round(i):
+            return int(round(i))
+        grid_start = (-north_offset + int_round(l_pos[0]), -east_offset + int_round(l_pos[1]))
+```
 
 #### 4. Set grid goal position from geodetic coords
 
