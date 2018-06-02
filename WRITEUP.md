@@ -79,7 +79,7 @@ We set global home position to the center of the map, as specified in `colliders
 
 This obviously means that the drone better be around that position,
 either in the simulation or in the real world.
-Because the map only coveres certain area around this position.
+Because the map only covers certain area around this position.
 If the actual drone is started in Easter Island it will have real trouble
 planning a path as the map does not go there.
 In our case simulator initialises the drone in pretty much the position we set as home.
