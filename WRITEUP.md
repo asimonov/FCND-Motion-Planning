@@ -60,7 +60,20 @@ Here's what same area looks like in the simulator:
 #### 1. Set global home position
 
 We set global home position to the center of the map, as specified in `colliders.csv`
-This is trivial piece of python file/string manipulation code.
+
+```python
+        filename = 'colliders.csv'
+        with open(filename) as f:
+            for line in f:
+                break
+        (_, lat0, _, lon0) = line.split()
+        lat0 = float(lat0.strip(','))
+        lon0 = float(lon0.strip(','))
+
+        # set home position to center of the map
+        self.set_home_position(lon0, lat0, 0)
+```
+
 
 #### 2. Set your current local position
 
@@ -68,6 +81,25 @@ Having defined global home we can use NED frame in reference to the home positio
 `global_to_local` function from `frame_utils.py` can do this for us, given home position and our current global coordinates
 (returned by `Drone.global_position`.)
 So the NED frame has its center at the global home position.
+
+Under the hood `global_to_local()` uses python `utm` package (Bidirectional UTM-WGS84 converter,
+UTM being [Universal Transverse Mercator](https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system))
+It is instructive to see how this is done:
+
+```python
+def global_to_local(global_position, global_home):
+    """
+    Convert a global position (lon, lat, up) to a local position (north, east, down) relative to the home position.
+
+    Returns:
+        numpy array of the local position [north, east, down]
+    """
+    (east_home, north_home, _, _) = utm.from_latlon(global_home[1], global_home[0])
+    (east, north, _, _) = utm.from_latlon(global_position[1], global_position[0])
+
+    local_position = np.array([north - north_home, east - east_home, -global_position[2]])
+    return local_position
+```
 
 #### 3. Set grid start position from local position
 
