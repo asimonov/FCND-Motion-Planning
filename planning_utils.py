@@ -215,9 +215,6 @@ def prune_path_bres(path, grid):
     pruned_path = [path.pop(0)]
     p2 = path.pop(0)
     for i, p3 in enumerate(path):
-        if i == len(path):
-            pruned_path.append(p3)
-            break
         p1 = pruned_path[-1]
         for p in list(bresenham(p1[0], p1[1], p3[0], p3[1])):
             if grid[p[0], p[1]] > 0.0:
@@ -226,6 +223,11 @@ def prune_path_bres(path, grid):
                 pruned_path.append(p2)
                 p2 = p
                 break
+
+        if i == len(path):
+            pruned_path.append(p3)
+            break
+
         # p1 to p3 has no collisions, so remove p2
         p2 = p3
 
@@ -393,6 +395,112 @@ def a_star_graph(map_data, drone_altitude, safety_distance, start, goal):
     final_path = [start,] + path[::-1] + [goal,]
     return final_path, path_cost
 
+
+
+
+
+
+
+from RRT import RRT
+
+def a_star_graph_rrt(grid, start, goal):
+    """Modified A* on RRT
+       Hardcoding metric norm heuristic
+    """
+
+    rrt = RRT(start)
+    TIMEOUT = 10000000
+    while TIMEOUT > 0:
+        # get random state (goal with specified prob, otherwise totally random in free space)
+        x_rand = rrt.sample_state(grid, goal, prob_goal=0.2)
+        # find closest node in the tree to the one we sampled
+        x_near = rrt.nearest_neighbor(x_rand)
+        # step from closest node in the tree in direction of random state until we hit obstacle
+        # or step MAX_STEPS steps
+        MAX_STEPS = 10
+        cells = list(bresenham(int(x_near[0]), int(x_near[1]), int(x_rand[0]), int(x_rand[1])))
+        hit = False
+        i = 0
+        for c in cells:
+            # First check if we're off the map
+            if np.amin(c) < 0 or c[0] >= grid.shape[0] or c[1] >= grid.shape[1]:
+                hit = True
+                break
+            # Next check if we're in collision
+            if grid[c[0], c[1]] == 1:
+                hit = True
+                break
+            i += 1
+            if i==MAX_STEPS:
+                break
+
+        x_next = cells[i-1]
+        if i>0:
+            rrt.add_vertex(x_next)
+            rrt.add_edge(x_near, x_next)
+            l = len(rrt.tree.nodes)
+            if (l % 100 == 0):
+                print("number of RRT nodes: {}".format(l))
+
+        if abs(x_next[0] - goal[0]) < 1 and abs(x_next[1] == goal[1]) < 1:
+            break
+        TIMEOUT -= 1
+
+    if TIMEOUT == 0:
+        raise Exception("timeout planning using RRT")
+
+
+    graph = rrt.tree
+
+    start_ne_g = closest_point(graph, start)
+    goal_ne_g = closest_point(graph, goal)
+    print('graph start: {}'.format(start_ne_g))
+    print('graph goal: {}'.format(goal))
+
+    queue = PriorityQueue()
+    queue.put((0, start_ne_g))
+    visited = set(start_ne_g)
+
+    branch = {}
+    found = False
+
+    while not queue.empty():
+        item = queue.get()
+        current_cost = item[0]
+        current_node = item[1]
+
+        if current_node == goal_ne_g:
+            print('Found a path.')
+            found = True
+            break
+        else:
+            for next_node in graph[current_node]:
+                cost = graph.edges[current_node, next_node]['weight']
+                new_cost = current_cost + cost + heuristic_npla(next_node, goal_ne_g)
+
+                if next_node not in visited:
+                    visited.add(next_node)
+                    queue.put((new_cost, next_node))
+
+                    branch[next_node] = (new_cost, current_node)
+
+    path = []
+    path_cost = 0
+    if found:
+        # retrace steps
+        path = []
+        n = goal_ne_g
+        path_cost = branch[n][0]
+        path.append(goal_ne_g)
+        while branch[n][1] != start_ne_g:
+            path.append(branch[n][1])
+            n = branch[n][1]
+        path.append(branch[n][1])
+
+    print('path length: {}'.format(len(path)))
+
+    final_path = [start,] + path[::-1] + [goal,]
+    return final_path, path_cost
 
 
 
