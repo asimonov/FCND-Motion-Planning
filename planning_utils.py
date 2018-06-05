@@ -49,6 +49,12 @@ def create_grid(data, drone_altitude, safety_distance):
     return grid, int(north_min), int(east_min)
 
 
+
+
+
+
+####### A* on a grid ***************************
+
 # Assume all actions cost the same.
 class Action(Enum):
     """
@@ -113,7 +119,6 @@ def valid_actions(grid, current_node):
     return valid_actions
 
 
-
 def a_star(grid, h, start, goal):
     """
     Given a grid and heuristic function returns
@@ -171,6 +176,12 @@ def heuristic(position, goal_position):
     #h = np.linalg.norm(np.array(position) - np.array(goal_position))
     h = math.sqrt( (position[0]-goal_position[0])**2 + (position[1]-goal_position[1])**2 )
     return h
+
+
+
+
+
+####### path pruning ***************************
 
 
 def collinearity_2D(p1, p2, p3, epsilon=1e-6):
@@ -238,7 +249,10 @@ def prune_path_bres(path, grid):
 
 
 
-###### GRAPH approach
+
+
+
+###### A* on a GRAPH ############################
 
 def create_grid_and_edges(data, drone_altitude, safety_distance):
     """
@@ -313,7 +327,6 @@ def create_grid_and_edges(data, drone_altitude, safety_distance):
 
     return grid, edges
 
-
 def closest_point(graph, current_point):
     """
     Compute the closest point in the `graph`
@@ -327,7 +340,6 @@ def closest_point(graph, current_point):
             closest_point = p
             dist = d
     return closest_point
-
 
 def heuristic_npla(n1, n2):
     return LA.norm(np.array(n2) - np.array(n1))
@@ -402,24 +414,30 @@ def a_star_graph(map_data, drone_altitude, safety_distance, start, goal):
 
 
 
+###### RRT ############################
+
 
 from RRT import RRT
 
-def a_star_graph_rrt(grid, start, goal):
-    """Modified A* on RRT
-       Hardcoding metric norm heuristic
+def a_star_rrt(grid, start, goal, prob_goal=0.3, max_steps=10):
+    """Modified A* on RRT.
+       Shoots in goal direction with probability prob_goal.
+       Otherwise chooses random place in the grid to go to.
+       Then steps from currently closes RRT point in that direction max_steps or until hits obstacle.
+       Stops when reached goal.
+       Uses A* machinery to retrace path.
+       Heuristic for shooting to goal and for 'nearest' tree branch: metric norm.
     """
 
     rrt = RRT(start)
     TIMEOUT = 10000000
     while TIMEOUT > 0:
         # get random state (goal with specified prob, otherwise totally random in free space)
-        x_rand = rrt.sample_state(grid, goal, prob_goal=0.3)
+        x_rand = rrt.sample_state(grid, goal, prob_goal=prob_goal)
         # find closest node in the tree to the one we sampled
         x_near = rrt.nearest_neighbor(x_rand)
         # step from closest node in the tree in direction of random state until we hit obstacle
         # or step MAX_STEPS steps
-        MAX_STEPS = 10
         cells = list(bresenham(int(x_near[0]), int(x_near[1]), int(x_rand[0]), int(x_rand[1])))
         hit = False
         i = 0
@@ -436,7 +454,7 @@ def a_star_graph_rrt(grid, start, goal):
             # Next check if we've reached the goal
             if c[0] == goal[0] and c[1] == goal[1]:
                 break
-            if i==MAX_STEPS:
+            if i==max_steps:
                 break
 
         x_next = cells[i-1]
@@ -448,7 +466,7 @@ def a_star_graph_rrt(grid, start, goal):
             break
         TIMEOUT -= 1
         if (TIMEOUT % 1000 == 0):
-            print("1000 tries of RRT. number of RRT nodes: {}".format(len(rrt.tree.nodes)))
+            print("+1000 expansions of RRT. number of RRT nodes: {}".format(len(rrt.tree.nodes)))
 
     if TIMEOUT == 0:
         raise Exception("timeout planning using RRT")

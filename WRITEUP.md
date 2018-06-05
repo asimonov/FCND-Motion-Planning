@@ -280,5 +280,30 @@ for the intersection tests.
 
 
 
+### RRT (Rapidly Exploring Random Trees)
+
+The last implementation we've tried is RRTs.
+We have done naive implementation based on lectures and examples.
+The idea is to expand a tree in random direction with some probability P
+and heuristically in the direction of the goal with probability 1-P
+at each step, from the point in the tree closest to the goal. 
+The other parameter is how much to move in random direction
+before stopping (or hitting an obstacle.)
+
+So there is inherent tradeoff between exploration of search space
+and exploitation (moving in the direction of goal.)
+It is not straightforward how these parameters should be chosen.
+If one is not carefull this implementation will take random long times to find a path.
+There is a good [lecture notes describing the issues](https://www.cs.cmu.edu/~motionplanning/lecture/lec20.pdf)
+
+What we have found is that with right choise of parameters the 
+runtime of RRT is similar to that of Voronoi-based graph search.
+This is to be expected as then RRT is sampling from the biggest Voronoi regions
+remaining unexplored. For P=90% and max number of steps of 10(meters) RRT
+feels similar to Voronoi graph approach.
+
+But main impression left by this exercise is that it is too unpredictable in
+runtime and resulting path is not guaranteed to be away from obstacles,
+so it is not what we chose to submit.
 
 
