@@ -4,8 +4,8 @@
 #### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.
 
 You're reading it!
-Here I will consider the [rubric](https://review.udacity.com/#!/rubrics/1534/view)
-points individually and describe how I addressed each point in my implementation.
+Here we will consider the [rubric](https://review.udacity.com/#!/rubrics/1534/view)
+points individually and describe how we addressed each point in my implementation.
 
 ### Explain the Starter Code
 
@@ -152,7 +152,7 @@ coordinates to the nearest integer.
 
 #### 5. Modify A* to include diagonal motion (or replace A* altogether)
 
-At first I have modified `A* on the grid` implementation provided in lectures
+At first we have modified `A* on the grid` implementation provided in lectures
 by implementing extra `Actions` to move north-east, north-west,
 south-west, south-east with cost of `sqrt(2)`.
 Using collinearity check the path is down from 451 waypoints to just 22.
@@ -160,18 +160,19 @@ Here is what the pruned path looked:
 
 ![A* with diagonal moves and collinearity pruning](./misc/a_star_coll.png)
 
-Immediately I noticed that the time taken to plan such a path was 7.98 seconds.
-So I started to tune the algorithm.
-I have profiled `a_star` code using [`cprofilev`](https://github.com/ymichael/cprofilev), an easy python profiling tool.
+Immediately we noticed that the time taken to plan such a path was 7.98 seconds.
+So we started to tune the algorithm.
+We have profiled `a_star` code using [`cprofilev`](https://github.com/ymichael/cprofilev), an easy python profiling tool.
 It turned out that heuristic function was taking most of the time.
-`np.linalg.norm` was the culprit, so I replaced it with `sqrt(x**2+y**2)`, which cut the time to 3.38 secs.
+`np.linalg.norm` was the culprit, so we replaced it with `sqrt(x**2+y**2)`, which cut the time to 3.38 secs.
 The next biggest time consumer is get property `delta` on `Action`.
 Replacing it with 2 simple functions to get first and second elements cuts time to 2.98 secs.
 Changing `Action.cost` from being a property to simple function cuts time further to 2.9 sec.
 The resulting code is less generic and specific to 2D planning, but the performance improvements are well worth it!
-Unfortunately with grid based approach to planning there are a lot of computations to perform, so I have left it there.
+Unfortunately with grid based approach to planning there are a lot of computations to perform, so 
+we have left it there.
 
-Then I replaced collinearity pruning by Bresenham ray tracing algorithm
+Then we replaced collinearity pruning by Bresenham ray tracing algorithm
 to prune not just straigh line path segments, but segments that
 can 'short-cut' parts of the path using straight line free-space segments.
 The path looked much better, without any performance issues:
@@ -180,8 +181,8 @@ The path looked much better, without any performance issues:
 
 The path looks 'smoother' than simple collinearity pruning, but does go very close to the buildings.
 
-So next I tried a grid/graph hybrid approach.
-I used grid to Voronoi graph transformation shown in the lectures, using center
+So next we tried a grid/graph hybrid approach.
+We've used grid to Voronoi graph transformation shown in the lectures, using center
 points of the obstacles as seeds for Voronoi space segmentation. With subsequent ray-tracing tests to prune
 resulting Voronoi ridges that collide with obstacles.
 The current map representation generates ~9700 Voronoi ridges that need to be mutually tested by Bresenham if they
@@ -197,7 +198,7 @@ The resulting path is much safer as it clears obstacles by a wide margin:
 
 #### 6. Cull waypoints 
 
-See above. I tried both collinearity and ray-tracing for grid-based A* search.
+See above. We've tried both collinearity and ray-tracing for grid-based A* search.
 And collinearity for A* on graph. It does result in small reduction of graph-based path length.
 
 
@@ -206,7 +207,7 @@ And collinearity for A* on graph. It does result in small reduction of graph-bas
 
 The flight works beautifully.
 But with distance-based waypoints the drone movement along the path is jerky.
-I have improved here by making 'deadband' around waypoint a function of time and speed,
+We have improved here by making 'deadband' around waypoint a function of time and speed,
 see below.
 
 
@@ -220,7 +221,7 @@ replanning method to invoke if you get off course or encounter unexpected obstac
 
 ### Time-based Deadbands
 
-I have improved progress on the path
+We have improved progress on the path
 by using the approach of 'if we are within 1 second of getting to currently
 targeted waypoint, switch to the next one':
 
@@ -253,8 +254,9 @@ generated the path that is far away from the obstacles it is good enough
 approach to not crash
 and still maintain good progress towards goal.
 
-I have tested this with increased `max_speed` simulator parameter of *15 m/s*
-and it still works great! For the target that I picked I can execute the planned
+We have tested this with increased `max_speed` simulator parameter of *15 m/s*
+and it still works great! For the target that we've picked we 
+can execute the planned
 path in 71 seconds! That is for the path of 549 meters, so averaging 7.7 m/s.
 
 
