@@ -231,6 +231,8 @@ def prune_path_bres(path, grid):
         # p1 to p3 has no collisions, so remove p2
         p2 = p3
 
+    pruned_path.append(path[-1])
+
     return pruned_path
 
 
@@ -412,7 +414,7 @@ def a_star_graph_rrt(grid, start, goal):
     TIMEOUT = 10000000
     while TIMEOUT > 0:
         # get random state (goal with specified prob, otherwise totally random in free space)
-        x_rand = rrt.sample_state(grid, goal, prob_goal=0.2)
+        x_rand = rrt.sample_state(grid, goal, prob_goal=0.3)
         # find closest node in the tree to the one we sampled
         x_near = rrt.nearest_neighbor(x_rand)
         # step from closest node in the tree in direction of random state until we hit obstacle
@@ -431,6 +433,9 @@ def a_star_graph_rrt(grid, start, goal):
                 hit = True
                 break
             i += 1
+            # Next check if we've reached the goal
+            if c[0] == goal[0] and c[1] == goal[1]:
+                break
             if i==MAX_STEPS:
                 break
 
@@ -438,13 +443,12 @@ def a_star_graph_rrt(grid, start, goal):
         if i>0:
             rrt.add_vertex(x_next)
             rrt.add_edge(x_near, x_next)
-            l = len(rrt.tree.nodes)
-            if (l % 100 == 0):
-                print("number of RRT nodes: {}".format(l))
 
-        if abs(x_next[0] - goal[0]) < 1 and abs(x_next[1] == goal[1]) < 1:
+        if x_next[0] == goal[0] and x_next[1] == goal[1]:
             break
         TIMEOUT -= 1
+        if (TIMEOUT % 1000 == 0):
+            print("1000 tries of RRT. number of RRT nodes: {}".format(len(rrt.tree.nodes)))
 
     if TIMEOUT == 0:
         raise Exception("timeout planning using RRT")
