@@ -71,7 +71,7 @@ class MotionPlanning(Drone):
 
     def state_callback(self):
         if self.in_mission:
-            print("state cb: {}".format(self.flight_state))
+            #print("state cb: {}".format(self.flight_state))
             if self.flight_state == States.MANUAL:
                 self.arming_transition()
             elif self.flight_state == States.ARMING:
@@ -99,7 +99,7 @@ class MotionPlanning(Drone):
 
     def waypoint_transition(self):
         self.flight_state = States.WAYPOINT
-        print("waypoint transition")
+        #print("waypoint transition")
         self.target_position = self.waypoints.pop(0)
         print('target WP: ', self.target_position)
         # cmd_position wants local NED coordinates in meters, i.e. in relation to home

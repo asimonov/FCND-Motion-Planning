@@ -258,6 +258,9 @@ We have tested this with increased `max_speed` simulator parameter of *15 m/s*
 and it still works great! For the target that we've picked we 
 can execute the planned
 path in 71 seconds! That is for the path of 549 meters, so averaging 7.7 m/s.
+The following video demonstrates the result:
+
+[![Video result on simulator run](misc/youtube-sim.png)](https://youtu.be/ONRzIJbqbUM)
 
 
 
